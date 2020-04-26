@@ -1,6 +1,11 @@
 import './ArtifactDetails.css';
 import 'prismjs/themes/prism.css';
 
+import { Cell, Column, Table } from "@blueprintjs/table";
+import { getArtifactClass, getArtifactClassName } from '../ArtifactInterface';
+import { getLinkThreshold, getTraceLinks } from '../TraceabilityInterface';
+
+import { Icon } from '@blueprintjs/core';
 import Prism from 'prismjs';
 import React from 'react';
 
@@ -56,13 +61,54 @@ export default class ArtifactDetails extends React.Component {
 		)
 	}
 
+	getTraceLinksTable() {
+		const traceLinks = getTraceLinks(this.state.artifactInfo.id);
+		const traceLinksList = Object.keys(traceLinks).map((targetName) => {
+			return {
+				artifactName: targetName,
+				traceValue: traceLinks[targetName]
+			}
+		});
+		traceLinksList.sort((a, b) => {
+			return b.traceValue - a.traceValue;
+		});
+		const valueCellRenderer = (index) => {
+			return <Cell>{traceLinksList[index].traceValue}</Cell>
+		}
+
+		const targetNameCellRenderer = (index) => {
+			return <Cell>{traceLinksList[index].artifactName}</Cell>
+		}
+
+		const linkThreshold = getLinkThreshold();
+		const linkStatusCellRenderer = (index) => {
+			const linkStatus = traceLinksList[index].traceValue > linkThreshold;
+			return <Cell style={{display: 'flex', justifyContent: 'center'}}>
+				<Icon icon={linkStatus ? 'link' : 'delete'} color={linkStatus ? 'green' : 'red'}/>
+			</Cell>
+		}
+
+		const artifactTypeCellRenderer = (index) => {
+			return <Cell>
+				{getArtifactClassName(getArtifactClass(traceLinksList[index].artifactName))}
+			</Cell>
+		}
+
+		return <Table numRows={Object.keys(traceLinks).length}>
+			<Column name="Link Status" cellRenderer={linkStatusCellRenderer} />
+			<Column name="Value" cellRenderer={valueCellRenderer} />
+			<Column name="Filename" cellRenderer={targetNameCellRenderer} />
+			<Column name="Type" cellRenderer={artifactTypeCellRenderer} />
+		</Table>
+	}
+
 	getDetailsContent() {
 		return (
-			<div style={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
+			<div style={{flexGrow: 1, display: 'flex', flexDirection: 'column', maxHeight: '100%'}}>
 				<div style={{padding: 15}}>
 						<h1 style={{margin: 0,}}>{this.getArtifactTitle()}</h1>
 				</div>
-				<div style={{display: 'flex', flexDirection: 'column', alignItems: 'stretch', padding: 10, flexGrow: 1, backgroundColor: 'blue'}}>
+				<div style={{display: 'flex', flexDirection: 'column', alignItems: 'stretch', padding: 10, flexGrow: 0, maxHeight: '40%'}}>
 
 					<pre 
 					style={{
@@ -82,8 +128,9 @@ export default class ArtifactDetails extends React.Component {
 					</pre>
 
 				</div>
-				<div style={{display: 'flex', padding: 10, flexGrow: 1,}}>
-					<h1 style={{margin: 0}}>Trace Links</h1>
+				<div style={{display: 'flex', flexDirection: 'column', padding: 10, paddingTop: 0, flexGrow: 1,}}>
+					<h2 style={{margin: 0}}>Trace Links</h2>
+					{this.getTraceLinksTable()}
 				</div>
 			</div>
 		);

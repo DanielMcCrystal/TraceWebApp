@@ -7,6 +7,7 @@ import React from 'react';
 
 require('prismjs/components/prism-java');
 require('@blueprintjs/core/lib/css/blueprint.css');
+require('@blueprintjs/table/lib/css/table.css');
 
 function App() {
 	return (
