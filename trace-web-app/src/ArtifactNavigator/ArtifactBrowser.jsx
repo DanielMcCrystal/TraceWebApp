@@ -4,12 +4,11 @@ import {HTMLSelect, InputGroup} from '@blueprintjs/core';
 
 import ArtifactPreviewCard from './ArtifactPreviewCard';
 import React from 'react';
-import { getAllArtifacts } from '../ArtifactInterface';
+import { getAllArtifactInfos } from '../interfaces/ArtifactInterface';
 
 export default class ArtifactBrowser extends React.Component {
 
 	state = {
-		artifactsLoaded: false,
 		artifactInfos: null,
 	}
 
@@ -20,16 +19,31 @@ export default class ArtifactBrowser extends React.Component {
 
 		this.artifactCardRefs = [];
 		this.currentlySelectedArtifactIndex = -1;
+
+		const artifactInfos = getAllArtifactInfos(this.currentArtifactClass);
+		this.state = {
+			artifactInfos: artifactInfos,
+		};
+
+		this.artifactCardRefs = artifactInfos.map((artifactInfo) => React.createRef());
 	}
 
+
+
 	fetchArtifacts(artifactClass) {
-		getAllArtifacts(artifactClass).then((artifactInfos) => {
-			this.artifactCardRefs =  artifactInfos.map((artifactInfo) => React.createRef());
-			this.setState({
-				artifactsLoaded: true,
-				artifactInfos: artifactInfos
-			});
+		const artifactInfos = getAllArtifactInfos(artifactClass);
+
+		this.artifactCardRefs = artifactInfos.map((artifactInfo) => React.createRef());
+		this.setState({
+			artifactInfos: artifactInfos
+		}, () => {
+			this.artifactCardRefs.forEach((ref) => {
+				if (ref.current) {
+					ref.current.reloadContent()
+				}
+			})
 		});
+
 	}
 
 	deselectCurrentlySelectedArtifact() {
@@ -37,10 +51,6 @@ export default class ArtifactBrowser extends React.Component {
 			this.artifactCardRefs[this.currentlySelectedArtifactIndex].current.deselect();
 		}
 		this.currentlySelectedArtifactIndex = -1;
-	}
-
-	componentDidMount() {
-		this.fetchArtifacts(this.currentArtifactClass);
 	}
 
 	getArtifactPreviewCards() {
@@ -81,7 +91,7 @@ export default class ArtifactBrowser extends React.Component {
 						<InputGroup large className="artifactFilters" leftIcon={'search'}/>
 					</div>
 					<div className="artifactPreviewsContainer">
-						{this.state.artifactsLoaded ? this.getArtifactPreviewCards() : null}
+						{this.getArtifactPreviewCards()}
 					</div>
 					<div style={{height: 20}}/>
 				</div>

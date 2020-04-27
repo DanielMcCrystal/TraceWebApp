@@ -1,10 +1,32 @@
 import React from 'react';
+import { getArtifactContent } from '../interfaces/ArtifactInterface';
 
 export default class ArtifactPreviewCard extends React.Component {
 
 	state = {
 		hovered: false,
 		selected: false,
+		loading: true,
+		content: null,
+	}
+
+	componentDidMount() {
+		getArtifactContent(this.props.artifactInfo.type, this.props.artifactInfo.id).then((content) => {
+			this.setState({
+				loading: false,
+				content: content
+			});
+		});
+	}
+
+	reloadContent() {
+		this.setState({loading: true});
+		getArtifactContent(this.props.artifactInfo.type, this.props.artifactInfo.id).then((content) => {
+			this.setState({
+				loading: false,
+				content: content
+			})
+		});
 	}
 
 	onMouseEnter() {
@@ -58,7 +80,7 @@ export default class ArtifactPreviewCard extends React.Component {
 					</h3>
 					<div style={{flexGrow: 1, overflow: 'hidden'}}>
 						<p style={{padding: 0, margin: 0, color: this.state.selected ? 'white' : 'black'}}>
-							{this.props.artifactInfo.content}
+							{this.state.loading ? '' : this.state.content}
 						</p>
 					</div>
 					

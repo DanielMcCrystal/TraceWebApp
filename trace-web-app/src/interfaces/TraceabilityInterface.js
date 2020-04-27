@@ -1,10 +1,12 @@
-import traceability from './dummy_data/TraceLinks.json'
+
 
 export function getTraceLinkValue(sourceName, targetName) {
-	return traceability.links[sourceName][targetName]
+	//return traceability.links[sourceName][targetName]
+	return 0.5;
 }
 
 export function getTraceLinks(artifactName) {
+	/*
 	if (artifactName in traceability.links) {
 		return traceability.links[artifactName]
 	}
@@ -17,6 +19,8 @@ export function getTraceLinks(artifactName) {
 		});
 	}
 	return traceLinks;
+	*/
+	return {};
 }
 
 export function getLinkThreshold() {

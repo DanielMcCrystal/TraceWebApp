@@ -2,8 +2,8 @@ import './ArtifactDetails.css';
 import 'prismjs/themes/prism.css';
 
 import { Cell, Column, Table } from "@blueprintjs/table";
-import { getArtifactClass, getArtifactClassName } from '../ArtifactInterface';
-import { getLinkThreshold, getTraceLinks } from '../TraceabilityInterface';
+import { getArtifactClassName, getArtifactContent, getArtifactInfo } from '../interfaces/ArtifactInterface';
+import { getLinkThreshold, getTraceLinks } from '../interfaces/TraceabilityInterface';
 
 import { Icon } from '@blueprintjs/core';
 import Prism from 'prismjs';
@@ -13,9 +13,9 @@ export default class ArtifactDetails extends React.Component {
 
 	state = {
 		artifactInfo: null,
+		artifactContent: null,
 	}
 
-	artifactClass = null;
 
 	constructor(props) {
 		super(props);
@@ -23,37 +23,43 @@ export default class ArtifactDetails extends React.Component {
 		this.codeRef = React.createRef();
 	}
 
-	loadArtifact(artifactInfo, artifactClass) {
-		this.artifactClass = artifactClass;
-		this.setState({artifactInfo: artifactInfo}, () => {
-			if (this.artifactClass !== "req") {
-				Prism.highlightElement(this.codeRef.current);
-			}
+	loadArtifact(artifactInfo) {
+
+		this.setState({
+			artifactInfo: artifactInfo,
+		}, () => {
+			getArtifactContent(artifactInfo.type, artifactInfo.id).then((artifactContent) => {
+				this.setState({artifactContent: artifactContent}, () => {
+					if (artifactInfo.type !== "req") {
+						Prism.highlightElement(this.codeRef.current);
+					}
+				});
+			});
 			
 		});
 	}
 
 	unloadArtifact() {
-		this.setState({artifactInfo: null});
+		this.setState({artifactInfo: null, artifactContent: null});
 	}
 
 	getArtifactTitle() {
 		return this.state.artifactInfo ? this.state.artifactInfo.id : '';
 	}
 
-	getArtifactContent() {
-		if (this.artifactClass === 'req') {
-			return this.state.artifactInfo ? this.state.artifactInfo.content : '';
+	getArtifactComponent() {
+		const content = this.state.artifactContent ? this.state.artifactContent : '';
+		if (this.state.artifactInfo.type === 'req') {
+			return content;
 		} else {
-			console.log(1);
-			return <code ref={this.codeRef} className="language-java" style={{margin: 0}}>
-				{this.state.artifactInfo ? this.state.artifactInfo.content : ''}
+			return <code ref={this.codeRef} className="language-c" style={{margin: 0}}>
+				{content}
 			</code>
 		}
 		
 	}
 
-	getNoSelectionContent() {
+	getNoSelectionComponent() {
 		return (
 			<div style={{display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center'}}>
 				<p>Please select a source artifact</p>
@@ -90,7 +96,7 @@ export default class ArtifactDetails extends React.Component {
 
 		const artifactTypeCellRenderer = (index) => {
 			return <Cell>
-				{getArtifactClassName(getArtifactClass(traceLinksList[index].artifactName))}
+				{getArtifactClassName(getArtifactInfo(traceLinksList[index].artifactName).type)}
 			</Cell>
 		}
 
@@ -102,7 +108,7 @@ export default class ArtifactDetails extends React.Component {
 		</Table>
 	}
 
-	getDetailsContent() {
+	getDetailsComponent() {
 		return (
 			<div style={{flexGrow: 1, display: 'flex', flexDirection: 'column', maxHeight: '100%'}}>
 				<div style={{padding: 15}}>
@@ -112,19 +118,21 @@ export default class ArtifactDetails extends React.Component {
 
 					<pre 
 					style={{
+						maxHeight: '100%',
 						margin: 0, 
 						fontFamily: 'Courier', 
-						whiteSpace: this.artifactClass === 'req' ? 'pre-wrap' : null,
+						whiteSpace: this.state.artifactInfo.type === 'req' ? 'pre-wrap' : null,
 						flexGrow: 1,
 						backgroundColor: 'whitesmoke',
 						borderWidth: 1,
 						borderColor: 'black',
 						borderStyle: 'solid',
 
+						overflow: 'scroll',
 						padding: 10,
 					}}
 					>
-						{this.getArtifactContent()}
+						{this.getArtifactComponent()}
 					</pre>
 
 				</div>
@@ -140,7 +148,7 @@ export default class ArtifactDetails extends React.Component {
 		return (
 			<div className="artifactDetailsContainer">
 				<div className="artifactDetails">
-					{this.state.artifactInfo ? this.getDetailsContent() : this.getNoSelectionContent()}
+					{this.state.artifactInfo ? this.getDetailsComponent() : this.getNoSelectionComponent()}
 					<div style={{height: 20}}/>
 				</div>
 			</div>
